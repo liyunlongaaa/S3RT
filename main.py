@@ -44,6 +44,10 @@ def get_args_parser():
     parser.add_argument('--input_fdim',            type=int, default=80, help='mel bin')
     parser.add_argument('--n_last_blocks',        type=int,   default=1,          help='use last blocks as output to eval')
     
+    #extral data pretrain
+    parser.add_argument('--imagenet_pretrain', default=False, type=utils.bool_flag, help="""imagenet_pretrain or not.""")
+    parser.add_argument('--audioset_pretrain', default=False, type=utils.bool_flag, help="""audioset_pretrain or not.""")
+
     # Misc
     parser.add_argument('--output_dir', default="./output", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=5, type=int, help='Save checkpoint every x epochs.')
