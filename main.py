@@ -1,13 +1,12 @@
 import sys, time, os, argparse, warnings, glob, torch
 import tqdm
 import utils
-from model import *
 from dataset import *
-from model.dino_loss import DINOLoss
+from dino_loss import DINOLoss
 from torchvision import models as torchvision_models
 from torchvision import datasets, transforms
-from model.ssrst_models import ASTModel, DINOHead
-from model.dino_loss import DINOLoss
+from ssrst_models import DINOHead
+import ssrst_models as models
 
 import datetime
 import time
@@ -44,6 +43,7 @@ def get_args_parser():
     parser.add_argument('--input_fdim',            type=int, default=80, help='mel bin')
     parser.add_argument('--n_last_blocks',        type=int,   default=1,          help='use last blocks as output to eval')
     
+
     #extral data pretrain
     parser.add_argument('--imagenet_pretrain', default=False, type=utils.bool_flag, help="""imagenet_pretrain or not.""")
     parser.add_argument('--audioset_pretrain', default=False, type=utils.bool_flag, help="""audioset_pretrain or not.""")
@@ -56,8 +56,11 @@ def get_args_parser():
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
+    parser.add_argument('--model_size', default='tiny224', type=str,
+        choices=['tiny224', 'small224', 'base224', 'base384'], help="""Type of optimizer. We recommend using adamw with ViTs.""")
 
-
+    parser.add_argument('--model_type', default='tiny224', type=str,
+        choices=['ASTModel', 'vit_tiny', 'vit_small', 'vit_base'], help="""Type of optimizer. We recommend using adamw with ViTs.""")
     parser.add_argument('--patch_size', default=16, type=int, help="""Size in pixels
         of input square patches - default 16 (for 16x16 patches). Using smaller
         values leads to better performance but requires more memory. Applies only
@@ -204,9 +207,18 @@ def train_dino(args):
     scorefile = open(args.output_dir + "/scores.txt", "a+")
 
     # ============ building student and teacher networks ... ============
-    student = ASTModel(**vars(args))
-    teacher = ASTModel(**vars(args))
-    embed_dim = student.original_embedding_dim
+    if args.model_type in models.__dict__.keys():
+        if args.model_type == "ASTModel":
+            student = models.__dict__['ASTModel'](**vars(args))
+            teacher = models.__dict__['ASTModel'](**vars(args))
+            embed_dim = student.original_embedding_dim
+        else:
+            student = models.__dict__[args.model_type](
+            patch_size=args.patch_size,
+            drop_path_rate=args.drop_path_rate,  # stochastic depth
+        )
+            teacher = models.__dict__[args.model_type](patch_size=args.patch_size)
+            embed_dim = student.embed_dim
     
     if args.eval:
         utils.only_load_model(
@@ -248,7 +260,7 @@ def train_dino(args):
     # there is no backpropagation through the teacher, so no need for gradients
     for p in teacher.parameters():
         p.requires_grad = False
-    print(f"Student and Teacher are built: they are both deiT network.")
+    print(f"Student and Teacher are built: they are both {args.model_type} network.")
 
 
         # ============ preparing loss ... ============
@@ -334,7 +346,7 @@ def train_dino(args):
             utils.save_on_master(save_dict, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'))
             
             #分布式的时候，是否会有影响？
-            eval_model = ASTModel(**vars(args))
+            eval_model = models.__dict__[args.model_type ](**vars(args))
             utils.only_load_model(os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'), student=eval_model)
             EER, minDCF = evaluate_network(eval_model, **vars(args))
             del eval_model

@@ -7,6 +7,7 @@ python -m torch.distributed.launch --nproc_per_node=每台机子gpu数
            and all other arguments of your training script)
 '''
 CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1  main.py \
+--model_type vit_base \
 --batch_size 2 \
 --train_list /data/voxceleb2/train_mini.txt \
 --val_list /data/voxceleb1/test_mini.txt \

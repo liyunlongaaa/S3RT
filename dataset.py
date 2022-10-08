@@ -29,10 +29,10 @@ class RandomCrop(CustomAudioTransform):
         self.pad = pad
 
     def __call__(self, signal):
-        if signal.shape[0] < self.size :
-            if self.pad:
-                signal = F.pad(signal, (0, self.size-signal.shape[0]))     #pad 0是否有损伤？ 但不会有需要pad的情况，因为load时已经检查过长度
-            return signal
+        # if signal.shape[0] < self.size :
+        #     if self.pad:
+        #         signal = F.pad(signal, (0, self.size-signal.shape[0]))     #pad 0是否有损伤？ 但不会有需要pad的情况，因为load时已经检查过长度
+        #     return signal
         start = numpy.random.randint(0, signal.shape[-1] - self.size + 1)
         return signal[start: start + self.size]
 
@@ -229,8 +229,9 @@ def get_loader(args): # Define the data loader
         sampler=sampler,
         batch_size=args.batch_size_per_gpu,
         num_workers=args.num_workers,
-        pin_memory=False,
-        drop_last=True
+        pin_memory=True,
+        drop_last=True,
+        prefetch_factor=5,
     )
     return trainLoader
 
