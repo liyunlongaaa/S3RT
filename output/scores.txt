@@ -1,2 +1,0 @@
-Epoch 0, EER 33.3333, minDCF 0.667
-Epoch 2, EER 100.0000, minDCF 1.000

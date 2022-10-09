@@ -19,4 +19,4 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1  ma
 --audioset_pretrain False \
 --local_crops_number 4 \
 --epochs 4 \
---warmup_epochs 2
+--warmup_epochs 2 > log.txt

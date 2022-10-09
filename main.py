@@ -249,7 +249,7 @@ def train_dino(args):
         teacher = nn.SyncBatchNorm.convert_sync_batchnorm(teacher)
 
         # we need DDP wrapper to have synchro batch norms working...
-        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu], find_unused_parameters=True)  # find_unused_parameters=True才能训，不然untimeError: Expected to have finished reduction in the prior iteration before starting a new one。是否会影响结果？ 如何才能去掉？
+        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu], find_unused_parameters=True)  # find_unused_parameters=True才能训，不然untimeError: Expected to have finished reduction in the prior iteration before starting a new one。是否会影响结果？ 如何才能去掉？ 和网络结构有关，deit用，vit不用
         teacher_without_ddp = teacher.module
     else:
         # teacher_without_ddp and teacher are the same thing

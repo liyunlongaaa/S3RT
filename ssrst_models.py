@@ -414,7 +414,7 @@ class PatchEmbed_v2(nn.Module):
         super().__init__()
         self.num_patches = (input_fdim // fstride) * (input_tdim // tstride)
         self.patch_size = patch_size
-        self.proj = nn.Conv2d(1, embed_dim, kernel_size=patch_size, stride=(fstride, tstride))
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=(fstride, tstride))
 
     def forward(self, x):
         x = self.proj(x).flatten(2).transpose(1, 2)
@@ -595,7 +595,7 @@ if __name__ == '__main__':
     mel_bin = 80
     ast_mdl = VisionTransformer(input_fdim=mel_bin, input_tdim=301)
     # input a batch of 10 spectrogram, each with 100 time frames and 128 frequency bins
-    test_input = torch.rand([2, mel_bin, 200])
+    test_input = torch.rand([2, 1, mel_bin, 200])
     test_input, ast_mdl = test_input.to(device), ast_mdl.to(device)
     test_output = ast_mdl(test_input, interpolate=False)
     # output should be in shape [10, 527], i.e., 10 samples, each with prediction of 527 classes.
