@@ -131,10 +131,11 @@ def get_args_parser():
 
 def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loader,
                     optimizer, lr_schedule, wd_schedule, momentum_schedule, epoch,
-                    fp16_scaler, scorefile, args):
+                    fp16_scaler, args):
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}/{}]'.format(epoch, args.epochs)
-    for it, audios in enumerate(metric_logger.log_every(data_loader, 10, header)):
+    for it, audios in enumerate(metric_logger.log_every(data_loader, 100, header)):
         #audios 是一个长度为2 + 4（crop_global + crop_local num）的列表。每个元素是平常的bath, (b, 3, len, len)
         # update weight decay and learning rate according to their schedule
         it = len(data_loader) * epoch + it  # global training iteration
@@ -249,12 +250,12 @@ def train_dino(args):
         teacher = nn.SyncBatchNorm.convert_sync_batchnorm(teacher)
 
         # we need DDP wrapper to have synchro batch norms working...
-        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu], find_unused_parameters=True)  # find_unused_parameters=True才能训，不然untimeError: Expected to have finished reduction in the prior iteration before starting a new one。是否会影响结果？ 如何才能去掉？ 和网络结构有关，deit用，vit不用
+        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu])  # find_unused_parameters=True才能训，不然untimeError: Expected to have finished reduction in the prior iteration before starting a new one。是否会影响结果？ 如何才能去掉？ 和网络结构有关，deit用，vit不用
         teacher_without_ddp = teacher.module
     else:
         # teacher_without_ddp and teacher are the same thing
         teacher_without_ddp = teacher
-    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu], find_unused_parameters=True)
+    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu])
     # teacher and student start with the same weights
     teacher_without_ddp.load_state_dict(student.module.state_dict())
     # there is no backpropagation through the teacher, so no need for gradients
@@ -324,11 +325,10 @@ def train_dino(args):
     print("Starting DINO training !")
     for epoch in range(start_epoch, args.epochs):
         data_loader.sampler.set_epoch(epoch)
-
         # ============ training one epoch of DINO ... ============
         train_stats = train_one_epoch(student, teacher, teacher_without_ddp, dino_loss,
             data_loader, optimizer, lr_schedule, wd_schedule, momentum_schedule,
-            epoch, fp16_scaler, scorefile, args)
+            epoch, fp16_scaler, args)
 
         # ============ writing logs ... ============
         save_dict = {
@@ -350,7 +350,8 @@ def train_dino(args):
             utils.only_load_model(os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'), student=eval_model)
             EER, minDCF = evaluate_network(eval_model, **vars(args))
             del eval_model
-
+            torch.cuda.empty_cache()
+            
             print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER, minDCF))
             scorefile.write("Epoch %d, EER %2.4f, minDCF %.3f\n"%(epoch, EER, minDCF))
             scorefile.flush() #一般的文件流操作都包含缓冲机制，write方法并不直接将数据写入文件，而是先写入内存中特定的缓冲区。flush方法是用来刷新缓冲区的，即将缓冲区中的数据立刻写入文件，同时清空缓冲区。

@@ -1,0 +1,12 @@
+Epoch 1, EER 49.6437, minDCF 1.000
+Epoch 2, EER 49.5532, minDCF 1.000
+Epoch 4, EER 49.1331, minDCF 1.000
+Epoch 6, EER 49.2820, minDCF 1.000
+Epoch 8, EER 48.8618, minDCF 1.000
+Epoch 10, EER 49.0639, minDCF 1.000
+Epoch 12, EER 49.2926, minDCF 1.000
+Epoch 14, EER 49.5826, minDCF 1.000
+Epoch 16, EER 49.3168, minDCF 1.000
+Epoch 18, EER 49.2341, minDCF 1.000
+Epoch 20, EER 49.5958, minDCF 1.000
+Epoch 22, EER 49.2714, minDCF 1.000
