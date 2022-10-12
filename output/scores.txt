@@ -11,3 +11,4 @@ Epoch 18, EER 49.2341, minDCF 1.000
 Epoch 20, EER 49.5958, minDCF 1.000
 Epoch 22, EER 49.2714, minDCF 1.000
 Epoch 24, EER 49.0214, minDCF 1.000
+Epoch 26, EER 49.2873, minDCF 1.000
