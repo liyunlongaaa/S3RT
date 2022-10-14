@@ -12,7 +12,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1  ma
 --audioset_pretrain False \
 --lr 1e-4 \
 --min_lr 1e-6 \
---output_dir /content/drive/Shareddrives \
+--output_dir /content/drive/MyDrive/exp2 \
 --local_crops_number 4 \
 --epochs 500 \
 --warmup_epochs 10 > log2.txt
