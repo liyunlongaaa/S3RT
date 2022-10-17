@@ -105,7 +105,7 @@ class train_dataset(Dataset):
             else:
                 crop = self.local_transfo(audio)
             aug_audio = self.augment_wav(crop, augment_profiles) #(1,len)
- 
+            #crops.append(aug_audio)
             with torch.no_grad():
                 fbank = self.mel_feature(aug_audio) + 1e-6
                 #normalize

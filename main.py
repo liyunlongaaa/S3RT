@@ -154,6 +154,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
 
         if not math.isfinite(loss.item()):
             print("Loss is {}, stopping training".format(loss.item()), force=True)
+            print(loss.item(), teacher_output, student_output)
             sys.exit(1)
 
         # student update
@@ -320,7 +321,7 @@ def train_dino(args):
     start_epoch = to_restore["epoch"]
 
     start_time =  begin_epoch_time = time.time()
-    avg_epoch_time = 0
+    avg_epoch_time, n = 0, 0
     Best_EER, Best_minDCF = 1e9, 1e9
     print("Starting DINO training !")
     for epoch in range(start_epoch, args.epochs):
@@ -370,8 +371,10 @@ def train_dino(args):
                 f.write(json.dumps(log_stats) + "\n")
 
         train_one_epoch_time = (time.time() - begin_epoch_time) / 3600.0
-        avg_epoch_time = epoch / (epoch + 1) * avg_epoch_time + train_one_epoch_time / (epoch + 1)
-        print(f"Estimate remaining training time: {(args.epochs - epoch - 1) * avg_epoch_time} hours")
+        #avg_epoch_time = epoch / (epoch + 1) * avg_epoch_time + train_one_epoch_time / (epoch + 1)
+        avg_epoch_time = avg_epoch_time + 1.0 / (n + 1) * (train_one_epoch_time - avg_epoch_time)
+        n += 1
+        print(f"Estimate remaining training time: {(args.epochs - epoch - 1) * avg_epoch_time} hours")  
         begin_epoch_time = time.time()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

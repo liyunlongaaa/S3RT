@@ -26,6 +26,7 @@ import random
 import datetime
 import subprocess
 from collections import defaultdict, deque
+from turtle import shape
 
 import numpy as np
 import torch
@@ -708,11 +709,14 @@ class MultiCropWrapper(nn.Module):
         # convert to list     
         if not isinstance(x, list):
             x = [x]
+        shapee = [i.shape for i in x]
+        #print("shapee", shapee)
         idx_crops = torch.cumsum(torch.unique_consecutive(
             torch.tensor([inp.shape[-1] for inp in x]),
             return_counts=True,
         )[1], 0)   # 2 (teacher)or [2, 10] (student) 
         start_idx, output = 0, torch.empty(0).to(x[0].device)
+        #print("muti crop idx_crops", idx_crops)
         for end_idx in idx_crops:   #为啥不直接全部cat？ 因为global 和 local crop size不一样！！！
             _out = self.backbone(torch.cat(x[start_idx: end_idx])) #相当于增大bath
             # The output is a tuple with XCiT model. See:
