@@ -524,14 +524,13 @@ class VisionTransformer(nn.Module):
         return self.pos_drop(x)
 
     def forward(self, x, interpolate=True):
-
-        # with torch.no_grad():
-        #     x = self.mel_feature(x) + 1e-6
-        #     #normalize
-        #     x = x.log()   
-        #     x = x - torch.mean(x, dim=-1, keepdim=True) # (1, n_mel, t)
-        #     x = x.unsqueeze(1) 
-        # print(x.shape)
+        x = x.squeeze(1)
+        with torch.no_grad():
+            x = self.mel_feature(x) + 1e-6
+            #normalize
+            x = x.log()   
+            x = x - torch.mean(x, dim=-1, keepdim=True) # (1, n_mel, t)
+            x = x.unsqueeze(1) 
         x = self.prepare_tokens(x, interpolate=interpolate)
         for blk in self.blocks:
             x = blk(x)

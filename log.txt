@@ -1,13 +1,14 @@
+Will run the code on one GPU.
 | distributed init (rank 0): env://
 git:
-  sha: 6c7349e8758c1c26ca4bef48946db769ca992a6a, status: has uncommited changes, branch: main
+  sha: 9ed5567eed8d99ca4a66a360235817a0b2c3be86, status: has uncommited changes, branch: main
 
 audioset_pretrain: False
 batch_size_per_gpu: 32
 clip_grad: 3.0
 dist_url: env://
 drop_path_rate: 0.1
-epochs: 100
+epochs: 10
 eval: False
 freeze_last_layer: 1
 global_crops_scale: 3
@@ -26,57 +27,28 @@ momentum_teacher: 0.996
 musan_path: /data/musan
 n_last_blocks: 1
 norm_last_layer: True
-num_workers: 10
+num_workers: 8
 optimizer: adamw
 out_dim: 65536
-output_dir: ./output
+output_dir: ./outputt
 patch_size: 16
 rank: 0
 saveckp_freq: 2
 seed: 3407
 teacher_temp: 0.04
-train_list: list/voxceleb1_train_list
-train_path: /data/voxceleb
+train_list: /data/voxceleb2/train_mini.txt
+train_path: /data/voxceleb/voxceleb2
 use_bn_in_head: False
-use_fp16: True
-val_list: list/trials.txt
-val_path: /data/voxceleb/voxceleb1
-warmup_epochs: 10
+use_fp16: False
+val_list: /data/voxceleb1/test_mini.txt
+val_path: /data/voxceleb1/VoxCeleb1/voxceleb1_wav
+warmup_epochs: 1
 warmup_teacher_temp: 0.04
 warmup_teacher_temp_epochs: 0
 weight_decay: 0.04
 weight_decay_end: 0.4
 world_size: 1
-Data loaded: there are 148642 audios.
+Data loaded: there are 22680 audios.
 Student and Teacher are built: they are both vit_tiny network.
-Found checkpoint at ./output/checkpoint.pth
-=> loaded 'student' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
-=> loaded 'teacher' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
-=> loaded 'optimizer' from checkpoint: './output/checkpoint.pth'
-=> loaded 'fp16_scaler' from checkpoint: './output/checkpoint.pth'
-=> loaded 'dino_loss' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
 Loss, optimizer and schedulers ready.
 Starting DINO training !
-Epoch: [32/100]  [   0/4645]  eta: 14:48:52  loss: 4.019680 (4.019680)  lr: 0.000054 (0.000054)  wd: 0.123551 (0.123551)  time: 11.481754  data: 6.757936  max mem: 2297
-Epoch: [32/100]  [ 100/4645]  eta: 0:48:08  loss: 3.946623 (4.089812)  lr: 0.000054 (0.000054)  wd: 0.123644 (0.123603)  time: 0.466089  data: 0.285238  max mem: 2403
-Epoch: [32/100]  [ 200/4645]  eta: 0:42:22  loss: 4.061976 (4.095669)  lr: 0.000054 (0.000054)  wd: 0.123747 (0.123654)  time: 0.526908  data: 0.333832  max mem: 2403
-Epoch: [32/100]  [ 300/4645]  eta: 0:39:41  loss: 3.982898 (4.078047)  lr: 0.000054 (0.000054)  wd: 0.123849 (0.123705)  time: 0.460223  data: 0.260989  max mem: 2403
-Epoch: [32/100]  [ 400/4645]  eta: 0:38:19  loss: 4.027030 (4.072309)  lr: 0.000054 (0.000054)  wd: 0.123952 (0.123757)  time: 0.501603  data: 0.308141  max mem: 2403
-Epoch: [32/100]  [ 500/4645]  eta: 0:37:34  loss: 4.068187 (4.074809)  lr: 0.000054 (0.000054)  wd: 0.124055 (0.123808)  time: 0.590970  data: 0.327886  max mem: 2403
-Epoch: [32/100]  [ 600/4645]  eta: 0:36:24  loss: 4.008206 (4.072403)  lr: 0.000054 (0.000054)  wd: 0.124158 (0.123860)  time: 0.500324  data: 0.253603  max mem: 2403
-Epoch: [32/100]  [ 700/4645]  eta: 0:35:28  loss: 4.125779 (4.070781)  lr: 0.000054 (0.000054)  wd: 0.124261 (0.123911)  time: 0.556803  data: 0.273711  max mem: 2403
-Epoch: [32/100]  [ 800/4645]  eta: 0:34:56  loss: 4.105531 (4.066853)  lr: 0.000054 (0.000054)  wd: 0.124365 (0.123963)  time: 0.473284  data: 0.231810  max mem: 2403
-Epoch: [32/100]  [ 900/4645]  eta: 0:33:56  loss: 4.125556 (4.061032)  lr: 0.000054 (0.000054)  wd: 0.124468 (0.124014)  time: 0.544996  data: 0.264393  max mem: 2403
-Epoch: [32/100]  [1000/4645]  eta: 0:33:03  loss: 4.024685 (4.059749)  lr: 0.000054 (0.000054)  wd: 0.124571 (0.124066)  time: 0.545496  data: 0.230161  max mem: 2403
-Epoch: [32/100]  [1100/4645]  eta: 0:32:33  loss: 4.043731 (4.057785)  lr: 0.000054 (0.000054)  wd: 0.124674 (0.124117)  time: 0.635517  data: 0.360202  max mem: 2403
-Epoch: [32/100]  [1200/4645]  eta: 0:32:04  loss: 4.086247 (4.057373)  lr: 0.000054 (0.000054)  wd: 0.124777 (0.124169)  time: 0.614512  data: 0.355894  max mem: 2403
-Epoch: [32/100]  [1300/4645]  eta: 0:30:59  loss: 4.028518 (4.057784)  lr: 0.000054 (0.000054)  wd: 0.124881 (0.124221)  time: 0.504555  data: 0.282066  max mem: 2403
-Epoch: [32/100]  [1400/4645]  eta: 0:30:15  loss: 4.059620 (4.059051)  lr: 0.000054 (0.000054)  wd: 0.124984 (0.124272)  time: 0.655133  data: 0.320185  max mem: 2403
-Epoch: [32/100]  [1500/4645]  eta: 0:29:47  loss: 4.095296 (4.059206)  lr: 0.000054 (0.000054)  wd: 0.125088 (0.124324)  time: 0.513086  data: 0.280157  max mem: 2403
-Epoch: [32/100]  [1600/4645]  eta: 0:28:53  loss: 4.049318 (4.056739)  lr: 0.000054 (0.000054)  wd: 0.125191 (0.124375)  time: 0.638800  data: 0.258424  max mem: 2403
-Epoch: [32/100]  [1700/4645]  eta: 0:27:56  loss: 4.003553 (4.058164)  lr: 0.000054 (0.000054)  wd: 0.125295 (0.124427)  time: 0.585637  data: 0.328686  max mem: 2403
-Epoch: [32/100]  [1800/4645]  eta: 0:27:00  loss: 3.961986 (4.056975)  lr: 0.000054 (0.000054)  wd: 0.125398 (0.124479)  time: 0.794542  data: 0.354006  max mem: 2403
-Epoch: [32/100]  [1900/4645]  eta: 0:26:20  loss: 3.949015 (4.056103)  lr: 0.000054 (0.000054)  wd: 0.125502 (0.124530)  time: 0.525462  data: 0.249410  max mem: 2403
-Epoch: [32/100]  [2000/4645]  eta: 0:25:38  loss: 4.039318 (4.056453)  lr: 0.000054 (0.000054)  wd: 0.125605 (0.124582)  time: 0.832151  data: 0.336804  max mem: 2403
-Epoch: [32/100]  [2100/4645]  eta: 0:24:44  loss: 4.006079 (4.055709)  lr: 0.000054 (0.000054)  wd: 0.125709 (0.124634)  time: 0.738146  data: 0.161392  max mem: 2403
-Epoch: [32/100]  [2200/4645]  eta: 0:24:01  loss: 4.074638 (4.056230)  lr: 0.000054 (0.000054)  wd: 0.125813 (0.124685)  time: 0.883952  data: 0.228650  max mem: 2403

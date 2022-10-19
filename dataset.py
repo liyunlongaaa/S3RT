@@ -1,3 +1,4 @@
+import time
 import torch, numpy, random, os, math, glob, soundfile
 from torch.utils.data import Dataset, DataLoader
 from scipy import signal
@@ -37,7 +38,10 @@ class RandomCrop(CustomAudioTransform):
         return signal[start: start + self.size]
 
 
-#相当于把transform直接写在dataset里了 又叫做在线数据争强
+#class S3RTTransform: 不好单独写muti_crop + 数据增强，因为还要读取声音文件加噪
+
+
+#相当于把transform直接写在dataset里了 又叫做在线数据争强，可能会有性能瓶颈
 class train_dataset(Dataset):
     def __init__(self, train_list, train_path, musan_path, input_fdim=80, max_frames=300, global_crops_scale=3, local_crops_scale=2, local_crops_number=4, **kwargs):
         self.max_frames = max_frames  # 300就是3s，输入网络的最大长度,最大长度其实就是teacher的输入
@@ -46,8 +50,7 @@ class train_dataset(Dataset):
         self.noisesnr = {'noise':[0,15],'speech':[13,20],'music':[5,15]} # The range of SNR
         self.numnoise = {'noise':[1,1], 'speech':[3,8], 'music':[1,1]}   #[3,8]表示在3个到8个之间采样k个noise files
         self.noiselist = {} 
-        self.global_crops_scale = global_crops_scale
-        self.local_crops_scale = local_crops_scale
+
         self.local_crops_number = local_crops_number
         augment_files   = glob.glob(os.path.join(musan_path,'*/*/*.wav')) # All noise files in list
 
@@ -64,7 +67,6 @@ class train_dataset(Dataset):
                                              #self.mel_feature
                                             ]) #3s
         # transformation for the local small crops
-        self.local_crops_number = local_crops_number
         self.local_transfo = transforms.Compose(
                                             [RandomCrop(16000 * local_crops_scale),
                                              #self.mel_feature
@@ -105,15 +107,14 @@ class train_dataset(Dataset):
             else:
                 crop = self.local_transfo(audio)
             aug_audio = self.augment_wav(crop, augment_profiles) #(1,len)
-            #crops.append(aug_audio)
-            with torch.no_grad():
-                fbank = self.mel_feature(aug_audio) + 1e-6
-                #normalize
-                fbank = fbank.log()   
-                fbank = fbank - torch.mean(fbank, dim=-1, keepdim=True) # (1, n_mel, t)
-                #print("fbank.shape", fbank.shape)
-                crops.append(fbank)
-
+            crops.append(aug_audio)
+            # with torch.no_grad():
+            #     fbank = self.mel_feature(aug_audio) + 1e-6
+            #     #normalize
+            #     fbank = fbank.log()   
+            #     fbank = fbank - torch.mean(fbank, dim=-1, keepdim=True) # (1, n_mel, t)
+            #     #print("fbank.shape", fbank.shape)
+            #     crops.append(fbank)
         return crops
 
     def __len__(self):

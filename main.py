@@ -135,6 +135,9 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}/{}]'.format(epoch, args.epochs)
+    load_batch_time, infer_gpu_time, ti, tu, tl = 0, 0, 0, 0, 0
+    lt = time.time()
+    st = lt
     for it, audios in enumerate(metric_logger.log_every(data_loader, 100, header)):
         #audios 是一个长度为2 + 4（crop_global + crop_local num）的列表。每个元素是平常的bath, (b, 3, len, len)
         # update weight decay and learning rate according to their schedule
@@ -146,15 +149,23 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
 
         # move audios to gpu
         audios = [audio.cuda(non_blocking=True) for audio in audios]
+
+        load_batch_time = time.time() - lt
+        tl += load_batch_time
+        gt = time.time()
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):
             teacher_output = teacher(audios[:2])  # only the 2 global views pass through the teacher
             student_output = student(audios)
             loss = dino_loss(student_output, teacher_output, epoch)
 
+        infer_gpu_time = time.time() - gt
+        ti += infer_gpu_time
+        #print(f"load_batch_time{load_batch_time}s, infer_gpu_time{infer_gpu_time}s")
+
+
         if not math.isfinite(loss.item()):
             print("Loss is {}, stopping training".format(loss.item()), force=True)
-            print(loss.item(), teacher_output, student_output)
             sys.exit(1)
 
         # student update
@@ -189,8 +200,13 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         metric_logger.update(loss=loss.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
+
+        lt = time.time()
+        tu += (lt - gt - infer_gpu_time)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
+    tt = time.time() - st
+    print(f"total time : {tt} s, load time {tl} s, gpu time {ti} s, update time {tu} s")
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
@@ -324,6 +340,7 @@ def train_dino(args):
     avg_epoch_time, n = 0, 0
     Best_EER, Best_minDCF = 1e9, 1e9
     print("Starting DINO training !")
+
     for epoch in range(start_epoch, args.epochs):
         data_loader.sampler.set_epoch(epoch)
         # ============ training one epoch of DINO ... ============
