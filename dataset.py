@@ -48,7 +48,7 @@ class train_dataset(Dataset):
         self.data_list = []
         self.noisetypes = ['noise','speech','music'] # Type of noise
         self.noisesnr = {'noise':[0,15],'speech':[13,20],'music':[5,15]} # The range of SNR
-        self.numnoise = {'noise':[1,1], 'speech':[3,8], 'music':[1,1]}   #[3,8]表示在3个到8个之间采样k个noise files
+        #self.numnoise = {'noise':[1,1], 'speech':[3,8], 'music':[1,1]}   #[3,8]表示在3个到8个之间采样k个noise files
         self.noiselist = {} 
 
         self.local_crops_number = local_crops_number
@@ -178,29 +178,6 @@ def loadWAV(filename, max_frames):
     startframe = numpy.int64(random.random() * (audiosize - max_audio)) # Randomly select a start frame to extract audio
     wavform = audio[int(startframe):int(startframe) + max_audio]
     return wavform #(len,)
-
-def loadWAVSplit(filename, max_frames): # Load two segments
-    #如果utterance不够长，padding。 默认win_len是400,每次平移160，所以要得到num_frames个frame, 后面要加240个采样点	
-    max_audio = max_frames * 160 + 240 # 1 segment 的最大长度，即 400 + 160 * （self.num_frames - 1）。1.8s
-    audio, sr = soundfile.read(filename) #shape (n,)
-    if sr != 16000:
-        exit()
-    audiosize = audio.shape[0]
-    if audiosize <= max_audio:   #这个判断不会走下去，因为默认设置每条语句都能至少分成两条，实际每条语句都大于4秒
-        shortage    = math.floor( ( max_audio - audiosize) / 2 )
-        audio       = numpy.pad(audio, (shortage, shortage), 'wrap')
-        audiosize   = audio.shape[0]
-    randsize = audiosize - (max_audio*2) # Select two segments
-    startframe = random.sample(range(0, randsize), 2)
-    startframe.sort()
-    startframe[1] += max_audio # Non-overlapped two segments
-    startframe = numpy.array(startframe)
-    numpy.random.shuffle(startframe)
-    feats = []
-    for asf in startframe: # Startframe[0] means the 1st segment, Startframe[1] means the 2nd segment
-        feats.append(audio[int(asf):int(asf)+max_audio])
-    feat = numpy.stack(feats,axis=0) # (2, len)
-    return feat
 
 def eval_transform(filename, max_frames, input_fdim):
     wavform = loadWAV(filename, max_frames)

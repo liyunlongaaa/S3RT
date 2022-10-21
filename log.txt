@@ -1,14 +1,14 @@
 Will run the code on one GPU.
 | distributed init (rank 0): env://
 git:
-  sha: 9ed5567eed8d99ca4a66a360235817a0b2c3be86, status: has uncommited changes, branch: main
+  sha: 2eefef9cecb4f0276a20d0d615dd27ab41a3258c, status: has uncommited changes, branch: main
 
 audioset_pretrain: False
 batch_size_per_gpu: 32
 clip_grad: 3.0
 dist_url: env://
 drop_path_rate: 0.1
-epochs: 10
+epochs: 100
 eval: False
 freeze_last_layer: 1
 global_crops_scale: 3
@@ -27,28 +27,56 @@ momentum_teacher: 0.996
 musan_path: /data/musan
 n_last_blocks: 1
 norm_last_layer: True
-num_workers: 8
+num_workers: 10
 optimizer: adamw
 out_dim: 65536
-output_dir: ./outputt
+output_dir: ./output
 patch_size: 16
 rank: 0
 saveckp_freq: 2
 seed: 3407
 teacher_temp: 0.04
-train_list: /data/voxceleb2/train_mini.txt
+train_list: list/train_vox2_list.txt
 train_path: /data/voxceleb/voxceleb2
 use_bn_in_head: False
 use_fp16: False
-val_list: /data/voxceleb1/test_mini.txt
-val_path: /data/voxceleb1/VoxCeleb1/voxceleb1_wav
-warmup_epochs: 1
+val_list: list/trials.txt
+val_path: /data/voxceleb/voxceleb1
+warmup_epochs: 10
 warmup_teacher_temp: 0.04
 warmup_teacher_temp_epochs: 0
 weight_decay: 0.04
 weight_decay_end: 0.4
 world_size: 1
-Data loaded: there are 22680 audios.
+Data loaded: there are 1092009 audios.
 Student and Teacher are built: they are both vit_tiny network.
+Found checkpoint at ./output/checkpoint.pth
+=> loaded 'student' from checkpoint './output/checkpoint.pth' with msg _IncompatibleKeys(missing_keys=['module.backbone.mel_feature.0.spectrogram.window', 'module.backbone.mel_feature.0.mel_scale.fb'], unexpected_keys=['module.backbone.mel_feature.1.spectrogram.window', 'module.backbone.mel_feature.1.mel_scale.fb', 'module.backbone.mel_feature.0.flipped_filter'])
+=> loaded 'teacher' from checkpoint './output/checkpoint.pth' with msg _IncompatibleKeys(missing_keys=['backbone.mel_feature.0.spectrogram.window', 'backbone.mel_feature.0.mel_scale.fb'], unexpected_keys=['backbone.mel_feature.1.spectrogram.window', 'backbone.mel_feature.1.mel_scale.fb', 'backbone.mel_feature.0.flipped_filter'])
+=> loaded 'optimizer' from checkpoint: './output/checkpoint.pth'
+=> key 'fp16_scaler' not found in checkpoint: './output/checkpoint.pth'
+=> loaded 'dino_loss' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
 Loss, optimizer and schedulers ready.
 Starting DINO training !
+Epoch: [32/100]  [    0/34125]  eta: 4 days, 21:41:17  loss: 3.831076 (3.831076)  lr: 0.000054 (0.000054)  wd: 0.123551 (0.123551)  time: 12.415464  data: 5.585983  max mem: 3093
+Epoch: [32/100]  [  100/34125]  eta: 5:44:18  loss: 4.000493 (4.055532)  lr: 0.000054 (0.000054)  wd: 0.123564 (0.123558)  time: 0.514035  data: 0.213932  max mem: 3200
+Epoch: [32/100]  [  200/34125]  eta: 5:18:46  loss: 3.925924 (4.034997)  lr: 0.000054 (0.000054)  wd: 0.123578 (0.123565)  time: 0.518958  data: 0.232935  max mem: 3200
+Epoch: [32/100]  [  300/34125]  eta: 5:17:41  loss: 4.059589 (4.043268)  lr: 0.000054 (0.000054)  wd: 0.123592 (0.123572)  time: 0.572592  data: 0.287038  max mem: 3200
+Epoch: [32/100]  [  400/34125]  eta: 5:14:01  loss: 4.094923 (4.047654)  lr: 0.000054 (0.000054)  wd: 0.123606 (0.123579)  time: 0.537286  data: 0.238142  max mem: 3200
+Epoch: [32/100]  [  500/34125]  eta: 5:16:42  loss: 4.131274 (4.044070)  lr: 0.000054 (0.000054)  wd: 0.123620 (0.123586)  time: 0.581296  data: 0.264044  max mem: 3200
+Epoch: [32/100]  [  600/34125]  eta: 5:17:32  loss: 3.930467 (4.037129)  lr: 0.000054 (0.000054)  wd: 0.123634 (0.123593)  time: 0.551811  data: 0.198968  max mem: 3200
+Epoch: [32/100]  [  700/34125]  eta: 5:21:37  loss: 3.949765 (4.036011)  lr: 0.000054 (0.000054)  wd: 0.123648 (0.123600)  time: 0.678012  data: 0.256656  max mem: 3200
+Epoch: [32/100]  [  800/34125]  eta: 5:24:04  loss: 3.979440 (4.033467)  lr: 0.000054 (0.000054)  wd: 0.123662 (0.123607)  time: 0.543962  data: 0.231068  max mem: 3200
+Epoch: [32/100]  [  900/34125]  eta: 5:32:37  loss: 4.033618 (4.032466)  lr: 0.000054 (0.000054)  wd: 0.123676 (0.123614)  time: 0.757021  data: 0.357175  max mem: 3200
+Epoch: [32/100]  [ 1000/34125]  eta: 5:34:29  loss: 3.894759 (4.027013)  lr: 0.000054 (0.000054)  wd: 0.123690 (0.123621)  time: 0.707052  data: 0.244741  max mem: 3200
+Epoch: [32/100]  [ 1100/34125]  eta: 5:44:09  loss: 3.902906 (4.026177)  lr: 0.000054 (0.000054)  wd: 0.123704 (0.123628)  time: 1.053271  data: 0.455470  max mem: 3200
+Epoch: [32/100]  [ 1200/34125]  eta: 5:42:59  loss: 4.026935 (4.025134)  lr: 0.000054 (0.000054)  wd: 0.123718 (0.123635)  time: 0.710777  data: 0.313648  max mem: 3200
+Epoch: [32/100]  [ 1300/34125]  eta: 5:41:35  loss: 4.073474 (4.023393)  lr: 0.000054 (0.000054)  wd: 0.123732 (0.123642)  time: 0.631026  data: 0.232557  max mem: 3200
+Epoch: [32/100]  [ 1400/34125]  eta: 5:40:07  loss: 4.016204 (4.023698)  lr: 0.000054 (0.000054)  wd: 0.123746 (0.123649)  time: 0.616102  data: 0.263746  max mem: 3200
+Epoch: [32/100]  [ 1500/34125]  eta: 5:46:43  loss: 4.054832 (4.023033)  lr: 0.000054 (0.000054)  wd: 0.123760 (0.123656)  time: 0.611718  data: 0.200681  max mem: 3200
+Epoch: [32/100]  [ 1600/34125]  eta: 5:50:55  loss: 3.818083 (4.021900)  lr: 0.000054 (0.000054)  wd: 0.123774 (0.123663)  time: 0.819370  data: 0.351401  max mem: 3200
+Epoch: [32/100]  [ 1700/34125]  eta: 5:49:54  loss: 4.034652 (4.022126)  lr: 0.000054 (0.000054)  wd: 0.123788 (0.123670)  time: 0.677729  data: 0.290951  max mem: 3200
+Epoch: [32/100]  [ 1800/34125]  eta: 5:50:06  loss: 4.071166 (4.022538)  lr: 0.000054 (0.000054)  wd: 0.123802 (0.123677)  time: 0.739148  data: 0.271197  max mem: 3200
+Epoch: [32/100]  [ 1900/34125]  eta: 5:50:25  loss: 3.950008 (4.021080)  lr: 0.000054 (0.000054)  wd: 0.123816 (0.123684)  time: 0.726312  data: 0.345400  max mem: 3200
+Epoch: [32/100]  [ 2000/34125]  eta: 5:52:38  loss: 4.037698 (4.023792)  lr: 0.000054 (0.000054)  wd: 0.123830 (0.123691)  time: 0.982393  data: 0.411897  max mem: 3200
+Epoch: [32/100]  [ 2100/34125]  eta: 5:57:18  loss: 4.142349 (4.025196)  lr: 0.000054 (0.000054)  wd: 0.123844 (0.123698)  time: 0.995564  data: 0.366564  max mem: 3200

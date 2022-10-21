@@ -528,6 +528,7 @@ class VisionTransformer(nn.Module):
         with torch.no_grad():
             x = self.mel_feature(x) + 1e-6   #根源是f16在这里产生了inf ，下面inf - inf 就变成nan了。gpu和cpu的运算有差别？？ 特征提取放到dataset并不会有inf的情况。 因为cpu用的是f32计算，gpu用的是f16，超过65535就溢出了
             #normalize
+            #print(torch.max(x))
             x = x.log()   
             x = x - torch.mean(x, dim=-1, keepdim=True) # (1, n_mel, t) 这个语句会导致loss变nan，在f16的情况下
             x = x.unsqueeze(1) 

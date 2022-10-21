@@ -161,7 +161,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
 
         infer_gpu_time = time.time() - gt
         ti += infer_gpu_time
-        #print(f"load_batch_time{load_batch_time}s, infer_gpu_time{infer_gpu_time}s")
+        print(f"load_batch_time{load_batch_time}s, infer_gpu_time{infer_gpu_time}s")
 
 
         if not math.isfinite(loss.item()):
