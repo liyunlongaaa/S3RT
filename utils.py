@@ -713,14 +713,13 @@ class MultiCropWrapper(nn.Module):
         idx_crops = torch.cumsum(torch.unique_consecutive(
             torch.tensor([inp.shape[-1] for inp in x]),
             return_counts=True,
-        )[1], 0)   # 2 (teacher)or [2, 10] (student) 
+        )[1], 0)   # 2 (teacher) or [2, 10] (student) 
         start_idx, output = 0, torch.empty(0).to(x[0].device)
         #print("muti crop idx_crops", idx_crops)
         for end_idx in idx_crops:   #为啥不直接全部cat？ 因为global 和 local crop size不一样！！！
 
             _out = self.backbone(torch.cat(x[start_idx: end_idx])) #相当于增大bath
-            # The output is a tuple with XCiT model. See:
-            # https://github.com/facebookresearch/xcit/blob/master/xcit.py#L404-L405
+
             if isinstance(_out, tuple):
                 _out = _out[0]
             # accumulate outputs

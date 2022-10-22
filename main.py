@@ -7,6 +7,7 @@ from torchvision import models as torchvision_models
 from torchvision import datasets, transforms
 from ssrst_models import DINOHead
 import ssrst_models as models
+from encoder import ECAPA_TDNN
 
 import datetime
 import time
@@ -161,7 +162,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
 
         infer_gpu_time = time.time() - gt
         ti += infer_gpu_time
-        print(f"load_batch_time{load_batch_time}s, infer_gpu_time{infer_gpu_time}s")
+        #print(f"load_batch_time{load_batch_time}s, infer_gpu_time{infer_gpu_time}s")
 
 
         if not math.isfinite(loss.item()):
@@ -224,7 +225,7 @@ def train_dino(args):
     data_loader = get_loader(args) # Define the dataloader
     scorefile = open(args.output_dir + "/scores.txt", "a+")
 
-    # ============ building student and teacher networks ... ============
+    #============ building student and teacher networks ... ============
     if args.model_type in models.__dict__.keys():
         if args.model_type == "ASTModel":
             student = models.__dict__['ASTModel'](**vars(args))
@@ -237,12 +238,28 @@ def train_dino(args):
         )
             teacher = models.__dict__[args.model_type](patch_size=args.patch_size)
             embed_dim = student.embed_dim
-    
+
+    student = ECAPA_TDNN()
+    teacher = ECAPA_TDNN()
+    embed_dim = 192
+    # import timm
+    # student = timm.create_model('resnet18', pretrained=False)
+
+    # from ThinResNet34 import ThinResNet34
+    # student = ThinResNet34()
+
+    #student = ECAPA_TDNN()
+            
+    # from resnet import ResNet50
+    # student = ResNet50()
+
+    # for layers in student.children():
+    #     print(layers)
     if args.eval:
-        utils.only_load_model(
-            os.path.join(args.output_dir, "checkpoint.pth"),  #注意名字
-            student=student
-        )
+        # utils.only_load_model(
+        #     os.path.join(args.output_dir, "checkpoint.pth"),  #注意名字
+        #     student=student
+        # )
         #分布式的时候，是否会有影响？
         EER, minDCF = evaluate_network(student, **vars(args))
         print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER, minDCF))
@@ -410,11 +427,12 @@ def evaluate_network(model, val_list, val_path, max_frames, input_fdim, n_last_b
         setfiles.sort()  # Read the list of wav files
         for idx, file in tqdm.tqdm(enumerate(setfiles), total = len(setfiles)):
 
-            feat = eval_transform(os.path.join(val_path, file), max_frames, input_fdim)
+            audio = eval_transform(os.path.join(val_path, file))
 
             with torch.no_grad():
-                intermediate_output = model.get_intermediate_layers(feat, n_last_blocks)
-                ref_feat = torch.cat([x[:, 0] for x in intermediate_output], dim=-1).detach().cpu()
+                feat = model(audio)
+                ref_feat = feat.detach().cpu()
+                #ref_feat = torch.cat([x[:, 0] for x in intermediate_output], dim=-1).detach().cpu()
                 #ref_feat = model(feat).detach().cpu()
             feats[file]  = ref_feat # Extract features for each data, get the feature dict
         scores, labels  = [], []

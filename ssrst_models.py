@@ -449,7 +449,7 @@ class VisionTransformer(nn.Module):
         self.patch_embed = PatchEmbed_v2(
             input_fdim=input_fdim, input_tdim=input_tdim,fstride=fstride, tstride=tstride, in_chans=1, patch_size=patch_size, embed_dim=embed_dim)
         self.mel_feature = torch.nn.Sequential(
-            #PreEmphasis(),        #预加重 no large influence     
+            PreEmphasis(),        #预加重 no large influence     
             torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160, \
                                                  f_min = 20, f_max = 7600, window_fn=torch.hamming_window, n_mels=input_fdim),
             ) ## (channel, n_mels, time)
@@ -524,14 +524,20 @@ class VisionTransformer(nn.Module):
         return self.pos_drop(x)
 
     def forward(self, x, interpolate=True):
+        #(B,1, len)
+        #print(x.shape)
+
         x = x.squeeze(1)
         with torch.no_grad():
+            #print("m",x.shape)
             x = self.mel_feature(x) + 1e-6   #根源是f16在这里产生了inf ，下面inf - inf 就变成nan了。gpu和cpu的运算有差别？？ 特征提取放到dataset并不会有inf的情况。 因为cpu用的是f32计算，gpu用的是f16，超过65535就溢出了
+            #(B,bin, t)
             #normalize
-            #print(torch.max(x))
             x = x.log()   
             x = x - torch.mean(x, dim=-1, keepdim=True) # (1, n_mel, t) 这个语句会导致loss变nan，在f16的情况下
             x = x.unsqueeze(1) 
+
+        #print(x.shape)
         x = self.prepare_tokens(x, interpolate=interpolate)
         for blk in self.blocks:
             x = blk(x)

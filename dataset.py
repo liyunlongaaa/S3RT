@@ -179,20 +179,21 @@ def loadWAV(filename, max_frames):
     wavform = audio[int(startframe):int(startframe) + max_audio]
     return wavform #(len,)
 
-def eval_transform(filename, max_frames, input_fdim):
-    wavform = loadWAV(filename, max_frames)
+def eval_transform(filename):
+    wavform, _ = soundfile.read(filename)
     wavform = torch.FloatTensor(numpy.stack([wavform], axis=0)) #(1, len)
-    mel_feature = torch.nn.Sequential(
-            PreEmphasis(),        #预加重 no large influence     
-            torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160, \
-                                                 f_min = 20, f_max = 7600, window_fn=torch.hamming_window, n_mels=input_fdim),
-            )
-    with torch.no_grad():
-        fbank = mel_feature(wavform) + 1e-6
-        #normalize
-        fbank = fbank.log()   
-        fbank = fbank - torch.mean(fbank, dim=-1, keepdim=True) # (1, n_mel, t)
-    return fbank.unsqueeze(0)
+    # mel_feature = torch.nn.Sequential(
+    #         PreEmphasis(),        #预加重 no large influence     
+    #         torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160, \
+    #                                              f_min = 20, f_max = 7600, window_fn=torch.hamming_window, n_mels=input_fdim),
+    #         )
+    # with torch.no_grad():
+    #     fbank = mel_feature(wavform) + 1e-6
+    #     #normalize
+    #     fbank = fbank.log()   
+    #     fbank = fbank - torch.mean(fbank, dim=-1, keepdim=True) # (1, n_mel, t)
+    #return fbank.unsqueeze(0)
+    return wavform.unsqueeze(0) # (1, 1, len)
 def worker_init_fn(worker_id):
     numpy.random.seed(numpy.random.get_state()[1][0] + worker_id)
 
