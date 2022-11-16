@@ -89,7 +89,7 @@ class train_dataset(Dataset):
 
         crops = []
 
-        for ii in range(0, 2 + self.local_crops_number): # 2 + self.local_crops_number segments , muticrop
+        for ii in range(0, 2 + self.local_crops_number): # 2 + self.local_crops_number segments , muticrop   这个每次load的数据增强最花时间，即使local_crops_number为0
             augment_profiles = {}
             rir_gains = numpy.random.uniform(-7,3,1)
             rir_filts = random.choice(self.rir_files)
