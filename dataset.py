@@ -110,7 +110,7 @@ class train_dataset(Dataset):
                 crop = self.local_transfo(audio)
             aug_audio = self.augment_wav(crop, augment_profiles) #(1,len)  #主要的时间开销！！！
             crops.append(aug_audio)
-            # with torch.no_grad():  #写在encoder里，节约时间
+            # with torch.no_grad():  
             #     fbank = self.mel_feature(aug_audio) + 1e-6
             #     #normalize
             #     fbank = fbank.log()   
