@@ -151,9 +151,11 @@ class Solarization(object):
 def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_name, patch_size):
     if os.path.isfile(pretrained_weights):
         state_dict = torch.load(pretrained_weights, map_location="cpu")
+
         if checkpoint_key is not None and checkpoint_key in state_dict:
             print(f"Take key {checkpoint_key} in provided checkpoint dict")
             state_dict = state_dict[checkpoint_key]
+
         # remove `module.` prefix
         state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         # remove `backbone.` prefix induced by multicrop wrapper
@@ -235,6 +237,7 @@ def only_load_model(ckp_path, **kwargs):
     for key, value in kwargs.items():
         if key in checkpoint and value is not None:
             try:
+                print(checkpoint[key])
                 msg = value.load_state_dict(checkpoint[key], strict=False)
                 print("=> only loaded '{}' from checkpoint '{}' with msg {} for eval".format(key, ckp_path, msg))
             except TypeError:

@@ -5,6 +5,8 @@ from scipy import signal
 from torchvision import datasets, transforms
 import torchaudio
 import torch.nn.functional as F
+from musan2lmdb import musanLMDBDataset
+from vox1_2lmdb import voxLMDBDataset
 
 class PreEmphasis(torch.nn.Module):
 
@@ -43,15 +45,16 @@ class RandomCrop(CustomAudioTransform):
 
 #相当于把transform直接写在dataset里了 又叫做在线数据争强，可能会有性能瓶颈
 class train_dataset(Dataset):
-    def __init__(self, train_list, train_path, musan_path, input_fdim=80, max_frames=300, global_crops_scale=3, local_crops_scale=2, local_crops_number=0, **kwargs):
+    def __init__(self, musan_path, vox_lmdb_path, musan_lmdb_path, input_fdim=80, max_frames=300, global_crops_scale=3, local_crops_scale=2, local_crops_number=4, **kwargs):
         self.max_frames = max_frames  # 300就是3s，输入网络的最大长度,最大长度其实就是teacher的输入
-        self.data_list = []
-        self.noisetypes = ['noise','speech', 'music'] # Type of noise
-        #self.noisetypes = ['noise']
+        
+        self.voxdataset = voxLMDBDataset(vox_lmdb_path)
+        self.musan_dataset = musanLMDBDataset(musan_lmdb_path)
+
+        self.noisetypes = ['noise','speech','music'] # Type of noise
         self.noisesnr = {'noise':[0,15],'speech':[13,20],'music':[5,15]} # The range of SNR
         #self.numnoise = {'noise':[1,1], 'speech':[3,8], 'music':[1,1]}   #[3,8]表示在3个到8个之间采样k个noise files
         self.noiselist = {} 
-        #self.i_time, self.i = 0, 0
 
         self.local_crops_number = local_crops_number
         augment_files   = glob.glob(os.path.join(musan_path,'*/*/*.wav')) # All noise files in list
@@ -77,14 +80,11 @@ class train_dataset(Dataset):
         for file in augment_files:
             if not file.split('/')[-3] in self.noiselist:
                 self.noiselist[file.split('/')[-3]] = []
-            self.noiselist[file.split('/')[-3]].append(file) # All noise files in dic
+            self.noiselist[file.split('/')[-3]].append(file.split('/')[-1]) # All noise files in dic
         self.rir_files = numpy.load('rir.npy') # Load the rir file (1000, 11200)
-        for line in open(train_list).read().splitlines():
-            filename = os.path.join(train_path, line.split()[1])
-            self.data_list.append(filename) # Load the training data list
         
     def __getitem__(self, index): #返回列表
-        audio = self.loadWAV(self.data_list[index], self.max_frames)
+        audio = self.loadWAV(index, self.max_frames, load_aug = False)
         # Data Augmentation
 
         crops = []
@@ -108,9 +108,9 @@ class train_dataset(Dataset):
                 crop = self.global_transfo(audio)
             else:
                 crop = self.local_transfo(audio)
-            aug_audio = self.augment_wav(crop, augment_profiles) #(1,len)  #主要的时间开销！！！
+            aug_audio = self.augment_wav(crop, augment_profiles) #(1,len)
             crops.append(aug_audio)
-            # with torch.no_grad():  #写在encoder里，节约时间
+            # with torch.no_grad():
             #     fbank = self.mel_feature(aug_audio) + 1e-6
             #     #normalize
             #     fbank = fbank.log()   
@@ -120,16 +120,16 @@ class train_dataset(Dataset):
         return crops
 
     def __len__(self):
-        return len(self.data_list)
+        return self.voxdataset.__len__()
 
-    def augment_wav(self, audio, augment):
+    def augment_wav(self, audio,augment):
         if augment['rir_filt'] is not None:
             rir     = numpy.multiply(augment['rir_filt'], pow(10, 0.1 * augment['rir_gain']))    
             #print(rir.shape, audio.shape)
             audio   = signal.convolve(audio, rir, mode='full')[:len(audio)]
         if augment['add_noise'] is not None:
             #print(audio.shape)
-            noiseaudio  = self.loadWAV(augment['add_noise'], self.max_frames)    #这个最慢，为啥？ 因为有一些噪声音频很长，还要完整读入，是不是没必要？
+            noiseaudio  = self.loadWAV(augment['add_noise'], self.max_frames, load_aug=True).astype(float)
             noise_db = 10 * numpy.log10(numpy.mean(noiseaudio[0] ** 2)+1e-4) 
             clean_db = 10 * numpy.log10(numpy.mean(audio ** 2)+1e-4) 
             noise = numpy.sqrt(10 ** ((clean_db - noise_db - augment['add_snr']) / 10)) * noiseaudio
@@ -138,51 +138,25 @@ class train_dataset(Dataset):
         audio = numpy.expand_dims(audio, 0)
         return torch.FloatTensor(audio) #(1，len) 
 
-    # #上下这两个数据增强实现有啥区别？ 可以换一下试试后面
-    # def add_noise(self, audio, noisecat):
-    #     clean_db    = 10 * numpy.log10(numpy.mean(audio ** 2)+1e-4)  #计算原声平均分贝，audio ** 2是声音的能量
-    #     numnoise    = self.numnoise[noisecat]   
-    #     noiselist   = random.sample(self.noiselist[noisecat], random.randint(numnoise[0],numnoise[1]))
-    #     noises = []
-    #     for noise in noiselist:
-    #         noiseaudio, _ = soundfile.read(noise)
-    #         length = self.num_frames * 160 + 240 #num_frames 200就是裁减两秒，因为默认采样率是16000，hop_len是160,即每次平移10ms，即1s就有100个frame
-    #         if noiseaudio.shape[0] <= length:
-    #             shortage = length - noiseaudio.shape[0]
-    #             noiseaudio = numpy.pad(noiseaudio, (0, shortage), 'wrap')
-    #         start_frame = numpy.int64(random.random()*(noiseaudio.shape[0]-length))
-    #         noiseaudio = noiseaudio[start_frame:start_frame + length]
-    #         noiseaudio = numpy.stack([noiseaudio],axis=0)
-
-    #         #调整noiseaudio的分贝
-    #         noise_db = 10 * numpy.log10(numpy.mean(noiseaudio ** 2)+1e-4) 
-    #         noisesnr   = random.uniform(self.noisesnr[noisecat][0],self.noisesnr[noisecat][1])
-    #         noises.append(numpy.sqrt(10 ** ((clean_db - noise_db - noisesnr) / 10)) * noiseaudio)
-    #     noise = numpy.sum(numpy.concatenate(noises,axis=0),axis=0,keepdims=True)
-    #     return noise + audio
-
-    # def add_rev(self, audio):
-    #     rir_file    = random.choice(self.rir_files)
-    #     rir, sr     = soundfile.read(rir_file)
-    #     rir         = numpy.expand_dims(rir.astype(numpy.float),0)
-    #     rir         = rir / numpy.sqrt(numpy.sum(rir**2))
-    #     return signal.convolve(audio, rir, mode='full')[:,:self.num_frames * 160 + 240]  #卷积
-
-    def loadWAV(self, filename, max_frames):
-        max_audio = max_frames * 160 + 240  # 240 is for padding, for 15ms since window is 25ms and step is 10ms.
+    def loadWAV(self, filename, max_frames, load_aug=True):
+        max_audio = max_frames * 160 + 240 # 240 is for padding, for 15ms since window is 25ms and step is 10ms.
         #s = time.time()
-        audio, _ = soundfile.read(filename)
+        if load_aug:
+            audio = self.musan_dataset[filename]
+        else:
+            audio = self.voxdataset[filename]
         #self.i_time += (time.time() - s)
         audiosize = audio.shape[0]
-
         if audiosize <= max_audio: # Padding if the length is not enough
             shortage    = math.floor( ( max_audio - audiosize + 1 ) / 2 )
             audio       = numpy.pad(audio, (shortage, shortage), 'wrap')
             audiosize   = audio.shape[0]
-        startframe = numpy.int64(random.random() * (audiosize - max_audio)) # Randomly select a start frame to extract audio
+        startframe = numpy.int64(random.random()*(audiosize-max_audio)) # Randomly select a start frame to extract audio
+       
         wavform = audio[int(startframe):int(startframe) + max_audio]
         return wavform #(len,)
 
+    
 def eval_transform(filename):
     wavform, _ = soundfile.read(filename)
     wavform = torch.FloatTensor(numpy.stack([wavform], axis=0)) #(1, len)
@@ -219,24 +193,12 @@ def get_loader(args): # Define the data loader
     return trainLoader
 
 if __name__ == '__main__':
-    datasets = train_dataset(train_list='list/voxceleb1_train_list', train_path='/data/voxceleb', musan_path='/data/musan_split')
-    #,'music'
-    # tt1 = tt2 = 0
-    # for i in range(200):
-    #     s = time.time()
-    #     a1, _ = soundfile.read("/data/musan/music/fma/music-fma-0121.wav")
-    #     tt1 += (time.time() - s)
-
-    #     s = time.time()
-    #     a1, _ = soundfile.read("/data/musan/noise/free-sound/noise-free-sound-0000.wav")
-    #     tt2 += (time.time() - s)
-
-    # print(tt1, tt2)
-
-    t = 0
+    datasets = train_dataset(musan_path='/data/musan', vox_lmdb_path='/home/yoos/Downloads/vox1_train_lmdb/data.lmdb', musan_lmdb_path="/home/yoos/Downloads/musan_lmdb/data.lmdb", max_frames=400)
+    
+    mud = voxLMDBDataset('/home/yoos/Downloads/vox1_train_lmdb/data.lmdb')
     s = time.time()
     for i in range(2000):
-        a1 = datasets[i]
-    t += (time.time() - s)
+        au = mud[i]
+    tt = time.time() - s
+    print(tt)
 
-    print(t)

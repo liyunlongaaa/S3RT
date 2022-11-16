@@ -182,11 +182,8 @@ class ThinResNet34(nn.Module):
         Z = self.block3(Z)
         Z = self.block4(Z)
 
-        Z = self.sap(Z)
-        # Z = self.nv(Z)
-        Z = Z.view(Z.size(0), -1)
+        #Z = self.sap(Z)
         # print(Z.shape)
-
         Z = self.fc(Z)
 
         return Z

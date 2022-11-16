@@ -92,7 +92,7 @@ class SAP(nn.Module):
         return torch.sum(W * X, dim=2)
     
 class ResNet(nn.Module):
-    def __init__(self,blocks, num_classes=512, expansion = 4):
+    def __init__(self,blocks, num_classes=192, expansion = 4):
         super(ResNet,self).__init__()
         self.expansion = expansion
 

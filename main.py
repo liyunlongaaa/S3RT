@@ -24,6 +24,8 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 
+import warnings
+warnings.filterwarnings("ignore")
 
 
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
@@ -38,6 +40,9 @@ def get_args_parser():
     parser.add_argument('--train_list',        type=str,   default="/data/voxceleb2/train_mini.txt",           help='Path for Vox2 list, https://www.robots.ox.ac.uk/~vgg/data/voxceleb/meta/train_list.txt')
     parser.add_argument('--val_list',          type=str,   default="/data/voxceleb1/test_mini.txt",           help='Path for Vox_O list, https://www.robots.ox.ac.uk/~vgg/data/voxceleb/meta/veri_test2.txt')
     parser.add_argument('--train_path',        type=str,   default="/data/voxceleb2",           help='Path to the Vox2 set')
+    parser.add_argument('--vox_lmdb_path',          type=str,   default="/home/yoos/Downloads/vox1_train_lmdb/data.lmdb",     help='Path to the Vox set')
+    parser.add_argument('--musan_lmdb_path',          type=str,   default="/home/yoos/Downloads/musan_lmdb/data.lmdb",     help='Path to the musan set')
+    
     parser.add_argument('--val_path',          type=str,   default="/data/voxceleb1/VoxCeleb1/voxceleb1_wav",     help='Path to the Vox_O set')
     parser.add_argument('--musan_path',        type=str,   default="/data/musan",           help='Path to the musan set')
     parser.add_argument('--eval',              dest='eval', action='store_true', help='Do evaluation only')
@@ -226,18 +231,18 @@ def train_dino(args):
     scorefile = open(args.output_dir + "/scores.txt", "a+")
 
     #============ building student and teacher networks ... ============
-    if args.model_type in models.__dict__.keys():
-        if args.model_type == "ASTModel":
-            student = models.__dict__['ASTModel'](**vars(args))
-            teacher = models.__dict__['ASTModel'](**vars(args))
-            embed_dim = student.original_embedding_dim
-        else:
-            student = models.__dict__[args.model_type](
-            patch_size=args.patch_size,
-            drop_path_rate=args.drop_path_rate,  # stochastic depth
-        )
-            teacher = models.__dict__[args.model_type](patch_size=args.patch_size)
-            embed_dim = student.embed_dim
+    # if args.model_type in models.__dict__.keys():
+    #     if args.model_type == "ASTModel":
+    #         student = models.__dict__['ASTModel'](**vars(args))
+    #         teacher = models.__dict__['ASTModel'](**vars(args))
+    #         embed_dim = student.original_embedding_dim
+    #     else:
+    #         student = models.__dict__[args.model_type](
+    #         patch_size=args.patch_size,
+    #         drop_path_rate=args.drop_path_rate,  # stochastic depth
+    #     )
+    #         teacher = models.__dict__[args.model_type](patch_size=args.patch_size)
+    #         embed_dim = student.embed_dim
 
     student = ECAPA_TDNN()
     teacher = ECAPA_TDNN()
@@ -255,6 +260,8 @@ def train_dino(args):
 
     # for layers in student.children():
     #     print(layers)
+
+
     if args.eval:
         # utils.only_load_model(
         #     os.path.join(args.output_dir, "checkpoint.pth"),  #注意名字
@@ -264,7 +271,6 @@ def train_dino(args):
         EER, minDCF = evaluate_network(student, **vars(args))
         print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER, minDCF))
         return
-
     # multi-crop wrapper handles forward with inputs of different resolutions
     student = utils.MultiCropWrapper(student, DINOHead(
         embed_dim,
@@ -276,6 +282,13 @@ def train_dino(args):
         teacher,
         DINOHead(embed_dim, args.out_dim, args.use_bn_in_head),
     )
+    # student = ECAPA_TDNN()
+    # teacher = ECAPA_TDNN()
+    # utils.load_pretrained_weights(student, os.path.join('/home/yoos/Documents/code/S3RT/S3RT/output/checkpoint0005.pth'), checkpoint_key="student", model_name=None, patch_size=None)
+    # EER1, minDCF1 = evaluate_network(student, **vars(args))
+    # print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER1, minDCF1))
+    # exit()
+
     # move networks to gpu
     student, teacher = student.cuda(), teacher.cuda()
     # synchronize batch norms (if any)
@@ -333,6 +346,9 @@ def train_dino(args):
         dino_loss=dino_loss,
     )
 
+
+
+
     # ============ init schedulers ... ============
     lr_schedule = utils.cosine_scheduler(
         args.lr * (args.batch_size_per_gpu * utils.get_world_size()) / 256.,  # linear scaling rule
@@ -381,9 +397,12 @@ def train_dino(args):
             utils.save_on_master(save_dict, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'))
             
             #分布式的时候，是否会有影响？
-            eval_model = models.__dict__[args.model_type ](**vars(args))
-            utils.only_load_model(os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'), student=eval_model)
-            EER, minDCF = evaluate_network(eval_model, **vars(args))
+            #eval_model = models.__dict__[args.model_type ](**vars(args))   #注意这里模型类型
+
+            eval_model = ECAPA_TDNN()
+            utils.load_pretrained_weights(student, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'), checkpoint_key="student", model_name=None, patch_size=None)
+            EER, minDCF = evaluate_network(student, **vars(args))
+            print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER, minDCF))
             del eval_model
             torch.cuda.empty_cache()
             
@@ -392,7 +411,7 @@ def train_dino(args):
             scorefile.flush() #一般的文件流操作都包含缓冲机制，write方法并不直接将数据写入文件，而是先写入内存中特定的缓冲区。flush方法是用来刷新缓冲区的，即将缓冲区中的数据立刻写入文件，同时清空缓冲区。
             if EER < Best_EER:
                 Best_EER = EER
-                utils.save_on_master(save_dict['student'], os.path.join(args.output_dir, f'Best_EER.pth'))
+                utils.save_on_master(save_dict['student'], os.path.join(args.output_dir, f'Best_EER.pth')) #只保存student
             if minDCF < Best_minDCF:
                 Best_minDCF = minDCF
                 utils.save_on_master(save_dict['student'], os.path.join(args.output_dir, f'Best_minDCF.pth'))
@@ -431,6 +450,7 @@ def evaluate_network(model, val_list, val_path, max_frames, input_fdim, n_last_b
 
             with torch.no_grad():
                 feat = model(audio)
+                print(feat)
                 ref_feat = feat.detach().cpu()
                 #ref_feat = torch.cat([x[:, 0] for x in intermediate_output], dim=-1).detach().cpu()
                 #ref_feat = model(feat).detach().cpu()
