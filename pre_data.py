@@ -12,35 +12,35 @@ VOX_DOWNLOADS = [
     ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_dev_wav_partab', 'bbfaaccefab65d82b21903e81a8a8020'),
     ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_dev_wav_partac', '017d579a2a96a077f40042ec33e51512'),
     ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_dev_wav_partad', '7bb1e9f70fddc7a678fa998ea8b3ba19'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partaa', 'da070494c573e5c0564b1d11c3b20577'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partab', '17fe6dab2b32b48abaf1676429cdd06f'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partac', '1de58e086c5edf63625af1cb6d831528'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partad', '5a043eb03e15c5a918ee6a52aad477f9'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partae', 'cea401b624983e2d0b2a87fb5d59aa60'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partaf', 'fc886d9ba90ab88e7880ee98effd6ae9'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partag', 'd160ecc3f6ee3eed54d55349531cb42e'),
-    # ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partah', '6b84a81b9af72a9d9eecbb3b1f602e65'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partaa', 'da070494c573e5c0564b1d11c3b20577'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partab', '17fe6dab2b32b48abaf1676429cdd06f'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partac', '1de58e086c5edf63625af1cb6d831528'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partad', '5a043eb03e15c5a918ee6a52aad477f9'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partae', 'cea401b624983e2d0b2a87fb5d59aa60'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partaf', 'fc886d9ba90ab88e7880ee98effd6ae9'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partag', 'd160ecc3f6ee3eed54d55349531cb42e'),
+    ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_partah', '6b84a81b9af72a9d9eecbb3b1f602e65'),
     ('http://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_test_wav.zip',   '185fdc63c3c739954633d50379a3d102')
 ]
 
 VOX_CONCATENATE = [
     ('vox1_dev_wav_parta*', 'vox1_dev_wav.zip', 'ae63e55b951748cc486645f532ba230b'),
-    # ('vox2_dev_aac_parta*', 'vox2_dev_aac.zip', 'bbc063c46078a602ca71605645c2a402')
+    ('vox2_dev_aac_parta*', 'vox2_dev_aac.zip', 'bbc063c46078a602ca71605645c2a402')
 ]
 
 VOX_EXTRACT = [
     'vox1_dev_wav.zip',
     'vox1_test_wav.zip',
-    # 'vox2_dev_aac.zip'
+    'vox2_dev_aac.zip'
 ]
 
 AUG_DOWNLOAD = [
-    # ('http://www.openslr.org/resources/28/rirs_noises.zip', 'e6f48e257286e05de56413b4779d8ffb'),
+    ('http://www.openslr.org/resources/28/rirs_noises.zip', 'e6f48e257286e05de56413b4779d8ffb'),
     ('http://www.openslr.org/resources/17/musan.tar.gz',    '0c472d4fc0c5141eca47ad1ffeb2a7df')
 ]
 
 AUG_EXTRACT = [
-#    'rirs_noises.zip',
+   'rirs_noises.zip',
     'musan.tar.gz'
 ]
 
@@ -89,10 +89,10 @@ def fix_vox_structure():
     subprocess.call('mkdir voxceleb1', shell=True)
     subprocess.call('mv wav/* voxceleb1', shell=True)
     subprocess.call('rm -r wav', shell=True)
-    # subprocess.call('mkdir voxceleb2', shell=True)
-    # subprocess.call('mv dev/aac/* voxceleb2', shell=True)
-    # subprocess.call('rm -r dev', shell=True)
-    # subprocess.call('rm -r vox*.zip', shell=True)
+    subprocess.call('mkdir voxceleb2', shell=True)
+    subprocess.call('mv dev/aac/* voxceleb2', shell=True)
+    subprocess.call('rm -r dev', shell=True)
+    subprocess.call('rm -r vox*.zip', shell=True)
 
 
 def convert_vox2_to_wav():
@@ -110,9 +110,9 @@ def convert_vox2_to_wav():
 
 
 def fix_aug_structure():
-    # subprocess.call('mv RIRS_NOISES/simulated_rirs .', shell=True)
-    # subprocess.call('rm -r RIRS_NOISES', shell=True)
-    # subprocess.call('rm -r rirs_noises.zip', shell=True)
+    subprocess.call('mv RIRS_NOISES/simulated_rirs .', shell=True)
+    subprocess.call('rm -r RIRS_NOISES', shell=True)
+    subprocess.call('rm -r rirs_noises.zip', shell=True)
     subprocess.call('rm -r musan.tar.gz', shell=True)
 
 
@@ -194,11 +194,11 @@ def download_trials_file():
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('output_path', help='Path to store datasets.')
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('output_path', help='Path to store datasets.')
+    args = parser.parse_args()
 
-    # os.chdir(args.output_path)
+    os.chdir(args.output_path)
 
     # # VoxCeleb1 and VoxCeleb2
     download(VOX_DOWNLOADS)
@@ -215,4 +215,4 @@ if __name__ == "__main__":
 
     download_trials_file()
     create_vox1_train_list_file()
-    #create_vox2_train_list_file()
+    create_vox2_train_list_file()

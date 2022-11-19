@@ -1,10 +1,10 @@
 Will run the code on one GPU.
 | distributed init (rank 0): env://
 git:
-  sha: 428b9a7b1554dbcb565a2d20bde55ea4d1da4c92, status: has uncommited changes, branch: main
+  sha: 21c3fa7d1daf67e45ceb0309767c4b138870f09d, status: has uncommited changes, branch: main
 
 audioset_pretrain: False
-batch_size_per_gpu: 16
+batch_size_per_gpu: 200
 clip_grad: 3.0
 dist_url: env://
 drop_path_rate: 0.1
@@ -25,7 +25,7 @@ model_size: tiny224
 model_type: vit_tiny
 momentum_teacher: 0.996
 musan_lmdb_path: /home/yoos/Downloads/musan_lmdb/data.lmdb
-musan_path: /data/musan_split
+musan_path: /home/yoos/Documents/data/musan
 n_last_blocks: 1
 norm_last_layer: True
 num_workers: 10
@@ -38,11 +38,11 @@ saveckp_freq: 1
 seed: 3407
 teacher_temp: 0.04
 train_list: list/voxceleb1_train_list
-train_path: /data/voxceleb
+train_path: /home/yoos/Documents/data/voxceleb1
 use_bn_in_head: False
 use_fp16: False
 val_list: list/trials.txt
-val_path: /data/voxceleb/voxceleb1
+val_path: /home/yoos/Documents/data/voxceleb1
 vox_lmdb_path: /home/yoos/Downloads/vox1_train_lmdb/data.lmdb
 warmup_epochs: 10
 warmup_teacher_temp: 0.04
@@ -51,15 +51,5 @@ weight_decay: 0.04
 weight_decay_end: 0.4
 world_size: 1
 Data loaded: there are 148642 audios.
-Student and Teacher are built: they are both vit_tiny network.
-Found checkpoint at ./output/checkpoint.pth
-=> loaded 'student' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
-=> loaded 'teacher' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
-=> loaded 'optimizer' from checkpoint: './output/checkpoint.pth'
-=> key 'fp16_scaler' not found in checkpoint: './output/checkpoint.pth'
-=> loaded 'dino_loss' from checkpoint './output/checkpoint.pth' with msg <All keys matched successfully>
-Loss, optimizer and schedulers ready.
-Starting DINO training !
-Epoch: [7/100]  [   0/9290]  eta: 3:31:45  loss: 10.538657 (10.538657)  lr: 0.008750 (0.008750)  wd: 0.044335 (0.044335)  time: 1.367671  data: 0.447221  max mem: 2070
-Epoch: [7/100]  [ 100/9290]  eta: 0:26:06  loss: 11.064476 (9.693723)  lr: 0.008762 (0.008757)  wd: 0.044347 (0.044342)  time: 0.166933  data: 0.000059  max mem: 2084
-Epoch: [7/100]  [ 200/9290]  eta: 0:25:46  loss: 11.068937 (10.374862)  lr: 0.008776 (0.008764)  wd: 0.044360 (0.044348)  time: 0.160414  data: 0.000067  max mem: 2084
+Pretrained weights found at output/Best_EER.pth and loaded with msg: _IncompatibleKeys(missing_keys=[], unexpected_keys=['head.mlp.0.weight', 'head.mlp.0.bias', 'head.mlp.2.weight', 'head.mlp.2.bias', 'head.mlp.4.weight', 'head.mlp.4.bias', 'head.last_layer.weight_g', 'head.last_layer.weight_v'])
+2022-11-19 23:43:20 EER 25.8749, minDCF 0.998

@@ -282,12 +282,12 @@ def train_dino(args):
         teacher,
         DINOHead(embed_dim, args.out_dim, args.use_bn_in_head),
     )
-    # student = ECAPA_TDNN()
-    # teacher = ECAPA_TDNN()
-    # utils.load_pretrained_weights(student, os.path.join('/home/yoos/Documents/code/S3RT/S3RT/output/checkpoint0005.pth'), checkpoint_key="student", model_name=None, patch_size=None)
-    # EER1, minDCF1 = evaluate_network(student, **vars(args))
-    # print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER1, minDCF1))
-    # exit()
+    student = ECAPA_TDNN()
+    teacher = ECAPA_TDNN()
+    utils.load_pretrained_weights(student, "output/Best_EER.pth", checkpoint_key="student", model_name=None, patch_size=None)
+    EER1, minDCF1 = evaluate_network(student, **vars(args))
+    print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER1, minDCF1))
+    exit()
 
     # move networks to gpu
     student, teacher = student.cuda(), teacher.cuda()
@@ -400,8 +400,8 @@ def train_dino(args):
             #eval_model = models.__dict__[args.model_type ](**vars(args))   #注意这里模型类型
 
             eval_model = ECAPA_TDNN()
-            utils.load_pretrained_weights(student, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'), checkpoint_key="student", model_name=None, patch_size=None)
-            EER, minDCF = evaluate_network(student, **vars(args))
+            utils.load_pretrained_weights(eval_model, os.path.join(args.output_dir, 'checkpoint.pth'), checkpoint_key="student", model_name=None, patch_size=None)
+            EER, minDCF = evaluate_network(eval_model, **vars(args))
             print(time.strftime("%Y-%m-%d %H:%M:%S"), "EER %2.4f, minDCF %.3f"%(EER, minDCF))
             del eval_model
             torch.cuda.empty_cache()
@@ -450,7 +450,7 @@ def evaluate_network(model, val_list, val_path, max_frames, input_fdim, n_last_b
 
             with torch.no_grad():
                 feat = model(audio)
-                print(feat)
+                #print(feat)
                 ref_feat = feat.detach().cpu()
                 #ref_feat = torch.cat([x[:, 0] for x in intermediate_output], dim=-1).detach().cpu()
                 #ref_feat = model(feat).detach().cpu()
